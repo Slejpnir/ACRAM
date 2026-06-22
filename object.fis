@@ -1,0 +1,145 @@
+[System]
+Name='object'
+Type='mamdani'
+Version=2.0
+NumInputs=12
+NumOutputs=2
+NumRules=4
+AndMethod='min'
+OrMethod='max'
+ImpMethod='min'
+AggMethod='max'
+DefuzzMethod='centroid'
+
+[Input1]
+Name='PRM'
+Range=[0 1]
+NumMFs=5
+MF1='R':'trapmf',[-0.125 -0.125 0.125 0.125]
+MF2='A':'trapmf',[0.126 0.126 0.375 0.375]
+MF3='D':'trapmf',[0.376 0.376 0.625 0.625]
+MF4='E':'trapmf',[0.626 0.626 0.875 0.875]
+MF5='P':'trapmf',[0.876 0.876 1.125 1.125]
+
+[Input2]
+Name='OVL'
+Range=[0 1]
+NumMFs=4
+MF1='Low':'gaussmf',[0.118 1.735e-18]
+MF2='Med':'gaussmf',[0.118 0.3333]
+MF3='High':'gaussmf',[0.118 0.6667]
+MF4='Critical':'gaussmf',[0.118 1]
+
+[Input3]
+Name='OAF'
+Range=[0 1]
+NumMFs=5
+MF1='FTT':'gaussmf',[0.08847 -6.939e-18]
+MF2='Rarely':'gaussmf',[0.08847 0.25]
+MF3='Avg':'gaussmf',[0.08847 0.5]
+MF4='Often':'gaussmf',[0.08847 0.75]
+MF5='Const':'gaussmf',[0.08847 1]
+
+[Input4]
+Name='ISL'
+Range=[0 1]
+NumMFs=3
+MF1='Low':'gaussmf',[0.1769 -1.388e-17]
+MF2='Med':'gaussmf',[0.1769 0.5]
+MF3='High':'gaussmf',[0.1769 1]
+
+[Input5]
+Name='LODI'
+Range=[0 1]
+NumMFs=3
+MF1='Low':'gaussmf',[0.1769 -1.388e-17]
+MF2='Med':'gaussmf',[0.1769 0.5]
+MF3='High':'gaussmf',[0.1769 1]
+
+[Input6]
+Name='PR'
+Range=[0 1]
+NumMFs=3
+MF1='None':'trapmf',[-0.1 -0.1 0.3 0.3]
+MF2='Low':'trapmf',[0.31 0.31 0.7 0.7]
+MF3='High':'trapmf',[0.71 0.71 1.1 1.1]
+
+[Input7]
+Name='AV'
+Range=[0 1]
+NumMFs=4
+MF1='P':'trapmf',[-0.1 -0.1 0.2 0.2]
+MF2='L':'trapmf',[0.21 0.21 0.5 0.5]
+MF3='A':'trapmf',[0.51 0.51 0.8 0.8]
+MF4='N':'trapmf',[0.81 0.81 1.1 1.1]
+
+[Input8]
+Name='IM'
+Range=[0 1]
+NumMFs=5
+MF1='X':'trapmf',[-0.125 -0.125 0.125 0.125]
+MF2='U':'trapmf',[0.126 0.126 0.375 0.375]
+MF3='P':'trapmf',[0.376 0.376 0.625 0.625]
+MF4='POC':'trapmf',[0.626 0.626 0.875 0.875]
+MF5='A':'trapmf',[0.876 0.876 1.125 1.125]
+
+[Input9]
+Name='NTA'
+Range=[0 1]
+NumMFs=5
+MF1='PAN':'trapmf',[-0.125 -0.125 0.125 0.125]
+MF2='LAN':'trapmf',[0.126 0.126 0.375 0.375]
+MF3='CAN':'trapmf',[0.376 0.376 0.625 0.625]
+MF4='WAN':'trapmf',[0.626 0.626 0.875 0.875]
+MF5='GAN':'trapmf',[0.876 0.876 1.125 1.125]
+
+[Input10]
+Name='NTS'
+Range=[0 1]
+NumMFs=3
+MF1='Open':'trapmf',[-0.1 -0.1 0.3 0.3]
+MF2='VPN':'trapmf',[0.31 0.31 0.7 0.7]
+MF3='Close':'trapmf',[0.71 0.71 1.1 1.1]
+
+[Input11]
+Name='OAB'
+Range=[0 1]
+NumMFs=3
+MF1='Ordinary':'gaussmf',[0.1769 -1.388e-17]
+MF2='Deviation':'gaussmf',[0.1769 0.5]
+MF3='Anomaly':'gaussmf',[0.1769 1]
+
+[Input12]
+Name='ASL'
+Range=[0 1]
+NumMFs=4
+MF1='Low':'gaussmf',[0.118 1.735e-18]
+MF2='Med':'gaussmf',[0.118 0.3333]
+MF3='High':'gaussmf',[0.118 0.6667]
+MF4='Critical':'gaussmf',[0.118 1]
+
+[Output1]
+Name='RiskLVL'
+Range=[0 1]
+NumMFs=5
+MF1='L':'gaussmf',[0.08847 -6.939e-18]
+MF2='P':'gaussmf',[0.08847 0.25]
+MF3='S':'gaussmf',[0.08847 0.5]
+MF4='H':'gaussmf',[0.08847 0.75]
+MF5='VH':'gaussmf',[0.08847 1]
+
+[Output2]
+Name='DinamicRiskLVL'
+Range=[0 1]
+NumMFs=5
+MF1='L':'gaussmf',[0.08847 -6.939e-18]
+MF2='P':'gaussmf',[0.08847 0.25]
+MF3='S':'gaussmf',[0.08847 0.5]
+MF4='H':'gaussmf',[0.08847 0.75]
+MF5='VH':'gaussmf',[0.08847 1]
+
+[Rules]
+0 1 1 1 1 0 0 0 0 0 0 0, 1 0 (1) : 1
+0 4 5 3 3 0 0 0 0 0 0 0, 5 0 (1) : 1
+0 0 0 0 0 0 0 0 0 0 1 0, 0 1 (1) : 1
+0 0 0 0 0 0 0 0 0 0 3 0, 0 5 (1) : 1

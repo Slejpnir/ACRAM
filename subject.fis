@@ -1,0 +1,82 @@
+[System]
+Name='subject'
+Type='mamdani'
+Version=2.0
+NumInputs=6
+NumOutputs=1
+NumRules=8
+AndMethod='min'
+OrMethod='max'
+ImpMethod='min'
+AggMethod='max'
+DefuzzMethod='centroid'
+
+[Input1]
+Name='PML'
+Range=[0 1]
+NumMFs=3
+MF1='Low':'gaussmf',[0.1769 -1.388e-17]
+MF2='Avg':'gaussmf',[0.1769 0.5]
+MF3='High':'gaussmf',[0.1769 1]
+
+[Input2]
+Name='SCA'
+Range=[0 1]
+NumMFs=3
+MF1='AAL1':'gaussmf',[0.1769 -1.388e-17]
+MF2='AAL2':'gaussmf',[0.1769 0.5]
+MF3='AAL3':'gaussmf',[0.1769 1]
+
+[Input3]
+Name='AML'
+Range=[0 1]
+NumMFs=3
+MF1='Low':'gaussmf',[0.1769 -1.388e-17]
+MF2='Avg':'gaussmf',[0.1769 0.5]
+MF3='High':'gaussmf',[0.1769 1]
+
+[Input4]
+Name='SAB'
+Range=[0 1]
+NumMFs=3
+MF1='Ordinary':'gaussmf',[0.1769 -1.388e-17]
+MF2='Deviation':'gaussmf',[0.1769 0.5]
+MF3='Anomaly':'gaussmf',[0.1769 1]
+
+[Input5]
+Name='PRM'
+Range=[0 1]
+NumMFs=5
+MF1='R':'trapmf',[-0.125 -0.125 0.125 0.125]
+MF2='A':'trapmf',[0.126 0.126 0.375 0.375]
+MF3='D':'trapmf',[0.376 0.376 0.625 0.625]
+MF4='E':'trapmf',[0.626 0.626 0.875 0.875]
+MF5='P':'trapmf',[0.876 0.876 1.125 1.125]
+
+[Input6]
+Name='AL'
+Range=[0 1]
+NumMFs=3
+MF1='Low':'gaussmf',[0.1769 -1.388e-17]
+MF2='Avg':'gaussmf',[0.1769 0.5]
+MF3='High':'gaussmf',[0.1769 1]
+
+[Output1]
+Name='RiskLvl'
+Range=[0 1]
+NumMFs=5
+MF1='S':'gaussmf',[0.08847 -6.939e-18]
+MF2='P':'gaussmf',[0.08847 0.25]
+MF3='Sub':'gaussmf',[0.08847 0.5]
+MF4='High':'gaussmf',[0.08847 0.75]
+MF5='VHigh':'gaussmf',[0.08847 1]
+
+[Rules]
+1 1 1 0 0 0, 1 (1) : 1
+3 3 3 0 0 0, 5 (1) : 1
+0 0 1 0 1 0, 1 (1) : 1
+0 0 3 0 5 0, 5 (1) : 1
+0 0 0 0 0 1, 1 (1) : 1
+0 0 0 0 0 3, 5 (1) : 1
+0 0 0 1 0 0, 5 (1) : 1
+0 0 0 3 0 0, 1 (1) : 1

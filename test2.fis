@@ -1,0 +1,78 @@
+[System]
+Name='test'
+Type='mamdani'
+Version=2.0
+NumInputs=5
+NumOutputs=1
+NumRules=243
+AndMethod='min'
+OrMethod='max'
+ImpMethod='min'
+AggMethod='max'
+DefuzzMethod='centroid'
+
+[Input1]
+Name='level of team integration'
+Range=[0 1]
+NumMFs=3
+MF1='outsource':'linzmf',[0.33 0.33]
+MF2='remote':'trapmf',[0.33 0.33 0.66 0.66]
+MF3='office':'linsmf',[0.66 0.66]
+
+[Input2]
+Name='compliance with the department/users area of responsibility'
+Range=[0 1]
+NumMFs=3
+MF1='inconsistency':'gaussmf',[0.1769 -1.388e-17]
+MF2='partial':'gaussmf',[0.1769 0.5]
+MF3='direct':'gaussmf',[0.1769 1]
+
+[Input3]
+Name='management level'
+Range=[0 1]
+NumMFs=3
+MF1='employee':'linzmf',[0.33 0.33]
+MF2='manager':'trapmf',[0.33 0.33 0.66 0.66]
+MF3='seo':'linsmf',[0.66 0.66]
+
+[Input4]
+Name='department level'
+Range=[0 1]
+NumMFs=3
+MF1='сustomer serv':'linzmf',[0.33 0.33]
+MF2='backoffice':'trapmf',[0.33 0.33 0.66 0.66]
+MF3='developer':'linsmf',[0.66 0.66]
+
+[Input5]
+Name='department headcount'
+Range=[0 1]
+NumMFs=3
+MF1='many':'gaussmf',[0.1769 -1.388e-17]
+MF2='medium':'gaussmf',[0.1769 0.5]
+MF3='few':'gaussmf',[0.1769 1]
+
+[Input6]
+Name='accreditation level for knowledge of cybersecurity rules'
+Range=[0 1]
+NumMFs=3
+MF1='low':'gaussmf',[0.1769 -1.388e-17]
+MF2='middle':'gaussmf',[0.1769 0.5]
+MF3='high':'gaussmf',[0.1769 1]
+
+[Input7]
+Name='legal security check'
+Range=[0 1]
+NumMFs=3
+MF1='issues':'gaussmf',[0.1769 -1.388e-17]
+MF2='untested':'gaussmf',[0.1769 0.5]
+MF3='ok':'gaussmf',[0.1769 1]
+
+[Output1]
+Name='employee risk'
+Range=[0 1]
+NumMFs=3
+MF1='mf1':'trimf',[-0.416666666666667 0 0.416666666666667]
+MF2='mf2':'trimf',[0.0833333333333333 0.5 0.916666666666667]
+MF3='mf3':'trimf',[0.583333333333333 1 1.41666666666667]
+
+[Rules]

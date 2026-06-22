@@ -1,0 +1,104 @@
+# Local credentials, wallets, and VPN profiles
+ws_credentials*.json
+!ws_credentials.example.json
+*wallet*.json
+*.ovpn
+
+# Runtime/generated files
+smartqc_websocket.py
+smartqc_output*.json
+smartqc_error.log
+smartqc_pid.txt
+*.log
+runtime_console.log
+error_log.txt
+debug_log.txt
+system.log
+acram.log
+jobs.csv
+risks.csv
+risksRT.csv
+permissions_matrix.csv
+last_transaction*.json
+snapshot_*
+DataSpace.txt
+
+# Generated result payloads
+acram_*_output*.json
+acram_aggregated_output.json
+mock_outputs/
+risk_graphs*/
+risk_graphs_probe*/
+tmp_graph_*/
+*_probe.png
+risk_surface_gui_probe.png
+test.png
+downloaded.png
+risk_graph_user_*
+
+# Real/local telemetry payloads and ad hoc ADI test senders
+Antonov_sbom.json
+Telco_sbom.json
+test_adi_user_anomaly.json
+test_uam_ws_payload.m
+testRestful.m
+testRestfulClient*.m
+write_test_adi*.py
+probe*.m
+DLT_test.m
+mocklog.ps1
+
+# Caches and local generated data
+cve_cache/
+logs/
+.agents/
+.codex/
+.git.broken-onedrive-placeholder/
+resources/project/
+
+# MATLAB/Python generated artifacts
+*.asv
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+venv/
+.venv/
+
+# Backups and local scratch copies
+*.bak
+*.bak.*
+* - Copy.*
+
+# Build/deployment copies
+StandaloneDesktopApp1/
+deploy/
+Production Server/
+CombConf/
+ITIConf/
+
+# Vendored/local client library copies. Keep the active root packages only.
+smartqc-py-lib/
+contextchain-py-lib/
+contextchain-py-lib-modern/
+smartqc/tests/
+get-pip.py
+
+# Archives, installers, and bundled binaries
+*.zip
+*.rar
+*.7z
+*.exe
+*.ctf
+*.jar
+
+# Office/document artifacts not required to run the code
+*.docx
+*.pptx
+*.pdf
+*.vsdx
+
+# Local visual/project artifacts
+FIZTree.*
+photo_*
+TELEMETRY.prj

@@ -1,0 +1,62 @@
+{
+    "context_data": {
+        "per-user-risk-levels": {
+            "name": "Per-user risk levels",
+            "description": "Per-user risk levels",
+            "type": "array",
+            "content": {
+                "level": {
+                    "description": "Risk level associated with the user",
+                    "name": "level",
+                    "type": "number",
+                    "order": "2"
+                },
+                "user-id": {
+                    "description": "User ID for whom the risk is shown",
+                    "name": "user-id",
+                    "type": "string",
+                    "order": "1"
+                }
+            },
+            "order": "1"
+        },
+        "severity": {
+            "description": "Severity of the indicator, one of GREEN, YELLOW, ORANGE, RED",
+            "name": "severity",
+            "type": "string",
+            "order": "2"
+        },
+        "source": {
+            "description": "The entity reporting this indicator",
+            "name": "source",
+            "type": "string",
+            "order": "3"
+        },
+        "timestamp": {
+            "description": "Measurement timestamp, ISO date-time",
+            "name": "timestamp",
+            "type": "string",
+            "order": "4"
+        },
+        "type": {
+            "description": "Type of the indicator",
+            "name": "type",
+            "type": "string",
+            "order": "5"
+        },
+        "value": {
+            "description": "Numerical value, average risk level of all users",
+            "name": "value",
+            "type": "number",
+            "order": "6"
+        }
+    },
+    "context_metadata": {
+        "follow-up-actions": {
+            "description": "Follow-up actions",
+            "name": "follow-up-actions",
+            "type": "string",
+            "order": "1"
+        }
+    }
+}

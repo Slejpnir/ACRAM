@@ -1,0 +1,19 @@
+device,Sum_of_access_count,Sum_of_time_spent_sec
+user 2 laptop,44,2975
+user 1 phone,12,1874
+wifi router,9,1129
+internet,48,4000
+user 1 corp,5,983
+FTP server,5,883
+printer,4,432
+user 3 admin,23,2618
+IP phone,2,906
+remote FTP user,2,906
+firewall,39,3586
+switch,39,3586
+TV,39,3586
+user 1,31,2386
+user 2,29,2186
+office server,29,2586
+camera, 15, 1500
+VPN, 27, 3400

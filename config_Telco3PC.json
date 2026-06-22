@@ -1,0 +1,122 @@
+{
+  "gui": "on",
+  "realTime": "on",
+  "realTimeMode": "ADI",
+  "env": "telco3PCs",
+  "LOIMethod": "indirect",
+  "LOIinput": "zabbix",
+  "OVLPMethod": "direct",
+  "mockOAB": false,
+  "minimalImpactLevel": 0.5,
+  "sbom": "manual",
+  "parseCVEListFromWebsocket": true,
+  "cveWebsocketSources": ["SBOM Tool"],
+  "sbomTargetObjectName": "Gateway",
+  "networkAnomalyTargetObjectName": "Gateway",
+  "subjects": [
+    {
+      "RAL": 1,
+      "mPA": 1,
+      "ALD": 1,
+      "MPA": 1,
+      "EPH": 1,
+      "ALT": 1,
+      "MPL": 1,
+      "PCR": 1,
+      "SPE": 1,
+      "SAB": "Low"
+    },
+    {
+      "RAL": 0,
+      "mPA": 0,
+      "ALD": 0,
+      "MPA": 1,
+      "EPH": 1,
+      "ALT": 0,
+      "MPL": 0,
+      "PCR": 1,
+      "SPE": 0,
+      "SAB": "Medium"
+    },
+    {
+      "RAL": 0,
+      "mPA": 0,
+      "ALD": 0,
+      "MPA": 1,
+      "EPH": 1,
+      "ALT": 0,
+      "MPL": 1,
+      "PCR": 0,
+      "SPE": 0,
+      "SAB": "High"
+    }
+  ],
+  "CVEList": [],
+  "OVLP": [],
+  "objects": [
+    {
+      "Name": "Gateway",
+      "OVL": "High",
+      "OAF": "Constantly",
+      "ISL": "High",
+      "LOD": "Low",
+      "LOI": "High",
+      "OVLP": [],
+      "S": "Negligible",
+      "OAB": "Low",
+      "IP": "163.162.228.1"
+    },
+    {
+      "Name": "PC 1 Ubuntu",
+      "OVL": "None",
+      "OAF": "Rarely",
+      "ISL": "Low",
+      "LOD": "Low",
+      "LOI": "Low",
+      "OVLP": [],
+      "S": "Negligible",
+      "OAB": "Low"
+    },
+    {
+      "Name": "PC 2 Windows",
+      "OVL": "None",
+      "OAF": "Rarely",
+      "ISL": "Low",
+      "LOD": "Low",
+      "LOI": "Low",
+      "OVLP": [],
+      "S": "Negligible",
+      "OAB": "Low"
+    },
+    {
+      "Name": "PC 3 Kali",
+      "OVL": "None",
+      "OAF": "Rarely",
+      "ISL": "Low",
+      "LOD": "Low",
+      "LOI": "Low",
+      "OVLP": [],
+      "S": "Negligible",
+      "OAB": "Low"
+    }
+  ],
+  "NT": {
+    "NTA": "CAN",
+    "NTS": "Open",
+    "SPI": "Average"
+  },
+  "ACL": {
+    "1,1": { "Permission": "P", "SCA": "AAL-1" },
+    "1,2": { "Permission": "P", "SCA": "AAL-1" },
+    "1,3": { "Permission": "P", "SCA": "AAL-1" },
+    "1,4": { "Permission": "P", "SCA": "AAL-1" },
+    "2,1": { "Permission": "R", "SCA": "AAL-1" },
+    "2,4": { "Permission": "E", "SCA": "AAL-1" },
+    "3,3": { "Permission": "R", "SCA": "AAL-1" }
+  },
+  "sbomFileName": "Telco_sbom.json",
+  "networkFileName": "network_telco3PC.xml",
+  "OAFFilename": "telco_3PC_OAF.csv",
+  "SABFileName": "telco_3PC_SAB.csv",
+  "credentialsFileName": "ws_credentials_tim.json"
+}

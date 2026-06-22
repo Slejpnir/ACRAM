@@ -1,0 +1,5 @@
+device,Sum_of_access_count,Sum_of_time_spent_sec
+Gateway,22,1043
+PC 1 Ubuntu,30,1040
+PC 2 Windows,38,1526
+PC 3 Kali,86,1982

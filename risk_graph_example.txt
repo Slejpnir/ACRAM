@@ -1,0 +1,159 @@
+Risk Graph Example
+==================
+
+This is a text example of the risk graph structure produced by createGraph.m.
+Each edge is written as:
+
+    source -> target
+
+Nodes
+-----
+RAL       Reset account lockout counter after
+mPA       Minimum password age
+ALD       Account Lockout Duration
+MPA       Maximum password age
+EPH       Enforce password history
+ALT       Account Lockout Threshold
+MPL       Minimum password length
+PCR       Password must meet complexity requirements
+SPE       Store passwords using reversible encryption
+PML       Password management level
+SCA       Strong customer authentication
+AML       Access management level
+PRM       Permissions
+PR        Privilege Requirement
+PRM-PR    Permissions + Privilege Requirement
+NTA       Network access type
+NTS       Network security type
+SPI       Security Parameters Index
+AV        Attack Vector
+NT-AV     Network type + attack vector
+AC        Attack complexity
+AR        Attack requirements
+AML-AC    Access management level + Attack complexity
+AML-AR    Access management level + Attack requirements
+EM        Exploit maturity
+AL        Attack likelihood
+VI        Vulnerable System Integrity
+VC        Vulnerable System Confidentiality
+VA        Vulnerable System Availability
+OAF       Object access frequency
+ISL       Information sensitivity level
+OAF-VA    Object access frequency + Vulnerable System Availability
+ISL-VC    Information sensitivity level + Vulnerable System Confidentiality
+S         Safety
+AS        Attack severity
+ACSRL     Access control system risk level
+OAB       Object Anomaly Behavior
+OAB-AR    Object Anomaly Behavior + Attack requirements
+OAB-AC    Object Anomaly Behavior + Attack complexity
+OAB-AR-AC Object Anomaly Behavior + Attack requirements + Attack complexity
+SAB       Subject Anomaly Behavior
+UI        User Interaction
+SAB-UI    Subject Anomaly Behavior + User Interaction
+LOI       Level of influence, only used when LOIMethod is direct
+
+Edges
+-----
+RAL -> PML
+mPA -> PML
+ALD -> PML
+MPA -> PML
+EPH -> PML
+ALT -> PML
+MPL -> PML
+PCR -> PML
+SPE -> PML
+SCA -> AML
+PML -> AML
+PRM -> PRM-PR
+PR -> PRM-PR
+SPI -> PRM-PR
+NTA -> NT-AV
+NTS -> NT-AV
+SPI -> NT-AV
+AV -> NT-AV
+AML -> AML-AC
+AC -> AML-AC
+AML -> AML-AR
+AR -> AML-AR
+AML-AC -> AL
+AML-AR -> AL
+NT-AV -> AL
+PRM-PR -> AL
+EM -> AL
+OAF -> OAF-VA
+VA -> OAF-VA
+ISL -> ISL-VC
+VC -> ISL-VC
+VI -> AS
+ISL-VC -> AS
+OAF-VA -> AS
+S -> AS
+AL -> ACSRL
+AS -> ACSRL
+OAB -> OAB-AR
+AR -> OAB-AR
+OAB -> OAB-AC
+AC -> OAB-AC
+OAB-AC -> OAB-AR-AC
+OAB-AR -> OAB-AR-AC
+SAB -> SAB-UI
+UI -> SAB-UI
+SAB-UI -> AL
+OAB-AR-AC -> AL
+
+Optional direct-LOI edge
+------------------------
+LOI -> AS
+
+Example node values
+-------------------
+The values below are illustrative. PML and SCA use the 0..10 scale used in
+plotGraph.m; the other nodes use the normalized 0..1 scale.
+
+Node      Value  Linguistic value
+RAL       0.80   Very high
+mPA       0.65   High
+ALD       0.70   High
+MPA       0.60   High
+EPH       0.90   Very high
+ALT       0.55   Substantial
+MPL       0.75   High
+PCR       1.00   Very high
+SPE       0.85   Very high
+PML       7.40   High
+SCA       8.00   Very high
+AML       0.34   Possible
+PRM       0.60   High
+PR        0.45   Substantial
+PRM-PR    0.52   Substantial
+NTA       0.70   High
+NTS       0.50   Substantial
+SPI       0.40   Substantial
+AV        0.85   Very high
+NT-AV     0.62   High
+AC        0.35   Possible
+AR        0.20   Possible
+AML-AC    0.41   Substantial
+AML-AR    0.38   Possible
+EM        0.75   High
+AL        0.58   Substantial
+VI        0.65   High
+VC        0.70   High
+VA        0.55   Substantial
+OAF       0.80   Very high
+ISL       0.70   High
+OAF-VA    0.68   High
+ISL-VC    0.72   High
+S         0.30   Possible
+AS        0.63   High
+ACSRL     0.61   High
+OAB       0.77   High
+OAB-AR    0.55   Substantial
+OAB-AC    0.60   High
+OAB-AR-AC 0.58   Substantial
+SAB       0.40   Substantial
+UI        0.25   Possible
+SAB-UI    0.36   Possible
+LOI       0.20   Possible

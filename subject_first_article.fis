@@ -1,0 +1,49 @@
+[System]
+Name='subject_first_article'
+Type='mamdani'
+Version=2.0
+NumInputs=2
+NumOutputs=1
+NumRules=9
+AndMethod='min'
+OrMethod='max'
+ImpMethod='min'
+AggMethod='max'
+DefuzzMethod='centroid'
+
+[Input1]
+Name='PML'
+Range=[0 10]
+NumMFs=3
+MF1='Low':'linzmf',[2.5 4]
+MF2='Avg':'pimf',[2 3 5 7]
+MF3='High':'linsmf',[6 7]
+
+[Input2]
+Name='SCL'
+Range=[0 10]
+NumMFs=3
+MF1='AAL1':'zmf',[2 4]
+MF2='AAL2':'pimf',[2 3 5 7]
+MF3='AAL3':'smf',[6 8]
+
+[Output1]
+Name='RiskLvl'
+Range=[0 100]
+NumMFs=5
+MF1='S':'trimf',[0 0 30]
+MF2='P':'trimf',[10 30 50]
+MF3='Sub':'trimf',[30 50 70]
+MF4='High':'trimf',[50 70 90]
+MF5='VHigh':'trimf',[70 100 100]
+
+[Rules]
+1 1, 5 (1) : 1
+3 3, 1 (1) : 1
+1 2, 4 (1) : 1
+1 3, 3 (1) : 1
+2 1, 4 (1) : 1
+2 2, 3 (1) : 1
+2 3, 2 (1) : 1
+3 1, 3 (1) : 1
+3 2, 2 (1) : 1

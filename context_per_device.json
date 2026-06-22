@@ -1,0 +1,77 @@
+{
+    "data": {
+        "context_data": {
+            "type": {
+                "name": "type",
+                "description": "Type of the indicator",
+                "type": "string"
+            },
+            "severity": {
+                "name": "severity",
+                "description": "Severity of the indicator, one of OFF, ON, GREEN, YELLOW, ORANGE, RED",
+                "type": "string"
+            },
+            "value": {
+                "name": "value",
+                "description": "Numerical value, representing either severity or confidence",
+                "type": "number"
+            },
+            "timestamp": {
+                "name": "timestamp",
+                "description": "Measurement timestamp, ISO date-time",
+                "type": "string"
+            },
+            "subject": {
+                "name": "subject",
+                "description": "The subject the indicator relates to",
+                "type": "string"
+            },
+            "source": {
+                "name": "source",
+                "description": "The entity reporting this indicator",
+                "type": "string"
+            },
+            "per-user-risk-levels": { 
+                "name": "per-user-risk-levels",
+                "description": "Risk levels broken down per user",
+                "type": "array",
+                "content": {
+                    "user-id": {
+                        "name": "user-id",
+                        "description": "User ID for whom the risk is shown",
+                        "type": "string"
+                    },
+                    "level": {
+                        "name": "level",
+                        "description": "Risk level associated with the user",
+                        "type": "number"
+                    }
+                },
+            },
+            "input-indicators": { 
+                "name": "input-indicators",
+                "description": "Identify indicators that served as input",
+                "type": "array",
+				"content": {
+					"asset-id": {
+                        "name": "asset-id",
+                        "description": "Asset ID of the transactions used for calculation",
+                        "type": "string"
+                    },
+				}
+            }
+        },
+        "context_metadata": {
+            "follow-up-actions": {
+                "name": "follow-up-actions",
+                "description": "Field for follow-up actions to be taken",
+                "type": "string"
+            }
+        }
+    },
+    "metadata": {
+        "description": "Context definition of an indicator for ACRAM output",
+        "name": "ACRAM INDICATOR", 
+        "permissions": ["7juxGd7DMNBQokzxgNt5quko9QpdjX5bNCev4f2g1JZE"]
+    } 
+}
