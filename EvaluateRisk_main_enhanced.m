@@ -48,8 +48,8 @@ try
     minimalImpactLevel = config.minimalImpactLevel;
     sbom = config.sbom;
     
-    sendToDataSpace = 1;
-    sendToDashboard = 1;
+    sendToDataSpace = configFlag(config, 'sendToDataSpace', 1);
+    sendToDashboard = configFlag(config, 'sendToDashboard', 1);
 %    if contains(env_new, "antonov") 
 %        sendToDataSpace = 0;
 %        sendToDashboard = 0;
@@ -403,6 +403,27 @@ function textValue = permissionCellText(entry)
         end
     catch
         textValue = "None";
+    end
+end
+
+function value = configFlag(config, fieldName, defaultValue)
+    value = defaultValue;
+    try
+        if ~isstruct(config) || ~isfield(config, fieldName)
+            return;
+        end
+
+        rawValue = config.(fieldName);
+        if islogical(rawValue)
+            value = double(rawValue);
+        elseif isnumeric(rawValue)
+            value = double(rawValue ~= 0);
+        else
+            textValue = lower(strtrim(string(rawValue)));
+            value = double(textValue == "1" || textValue == "true" || textValue == "on" || textValue == "yes");
+        end
+    catch
+        value = defaultValue;
     end
 end
 
