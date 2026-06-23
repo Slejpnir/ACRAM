@@ -1,6 +1,0 @@
-triggers,Sum_of_Sub1,Sum_of_Sub2,Sum_of_Sub3,Sum_of_total_sub1,Sum_of_total_sub2,Sum_of_total_sub3,Sum_of_tr
-root_privileges,0,1,1,4,3,5,12
-mounting_device,2,1,1,4,3,5,12
-installation_detected,2,0,1,4,3,5,12
-file_upload,0,1,1,4,3,5,12
-bittorrent_client,0,0,1,4,3,5,12
