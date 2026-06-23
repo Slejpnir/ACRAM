@@ -105,6 +105,7 @@ TELEMETRY.prj
 
 # Local-only docs/configs not published to GitHub
 IMPROVEMENTS_GUIDE.md
+REFACTORING_SUMMARY.md
 config_Nokia.json
 config_Nokia_no_CVE.json
 config_Nokia_robot_CVE.json
