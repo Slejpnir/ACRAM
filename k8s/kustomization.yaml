@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: acram
+resources:
+  - namespace.yaml
+  - persistent-volume-claim.yaml
+  - deployment.yaml
+configMapGenerator:
+  - name: acram-config
+    files:
+      - config.json=config/config.json
+generatorOptions:
+  labels:
+    app.kubernetes.io/name: acram
+images:
+  - name: acram
+    newName: registry.example.com/telemetry/acram
+    newTag: r2025b

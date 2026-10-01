@@ -1,0 +1,132 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acram
+  labels:
+    app.kubernetes.io/name: acram
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: acram
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: acram
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: acram
+          image: acram:r2025b
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ACRAM_CONFIG
+              value: /etc/acram/config.json
+            - name: ACRAM_CREDENTIALS_FILE
+              value: /etc/acram/credentials.json
+            - name: ACRAM_CREDENTIALS_FILENAME
+              value: ws_credentials_nokia.json
+            - name: ACRAM_HEALTH_MODE
+              value: websocket
+            - name: ACRAM_WORKDIR
+              value: /var/lib/acram/work
+            - name: ACRAM_READY_FILE
+              value: /tmp/acram/ready
+            - name: ACRAM_STOP_FILE
+              value: /tmp/acram/stop
+            - name: MCR_CACHE_ROOT
+              value: /var/cache/mcr
+            - name: HOME
+              value: /var/lib/acram/work/home
+            - name: NVD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: acram-adi-credentials
+                  key: nvd-api-key
+                  optional: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          startupProbe:
+            exec:
+              command:
+                - /opt/acram/healthcheck.sh
+                - startup
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 60
+          readinessProbe:
+            exec:
+              command:
+                - /opt/acram/healthcheck.sh
+                - runtime
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+              ephemeral-storage: 2Gi
+            limits:
+              cpu: "2"
+              memory: 6Gi
+              ephemeral-storage: 8Gi
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - >-
+                    touch /tmp/acram/stop;
+                    i=0;
+                    while [ -f /tmp/acram/ready ] && [ "$i" -lt 45 ];
+                    do sleep 1; i=$((i + 1)); done
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/acram
+            - name: mcr-cache
+              mountPath: /var/cache/mcr
+            - name: tmp
+              mountPath: /tmp
+            - name: config
+              mountPath: /etc/acram/config.json
+              subPath: config.json
+              readOnly: true
+            - name: credentials
+              mountPath: /etc/acram/credentials.json
+              subPath: credentials.json
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: acram-data
+        - name: mcr-cache
+          emptyDir:
+            sizeLimit: 4Gi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: config
+          configMap:
+            name: acram-config
+        - name: credentials
+          secret:
+            secretName: acram-adi-credentials
+            defaultMode: 0440

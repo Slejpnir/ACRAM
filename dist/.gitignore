@@ -1,0 +1,22 @@
+# Keep source launchers and configuration; generated runtimes and runs stay local.
+*
+!.gitignore
+!ACRAM-UC1.cmd
+!ACRAM-UC1.sh
+!ACRAM-UC1.txt
+!ACRAM-UC3.cmd
+!Start-UC3.cmd
+!Launch-UC3.ps1
+!Launch-UC3-Console.ps1
+!README-UC3.txt
+!README-UC3-console.txt
+!config_Telco3PC.json
+!config_Telco3PC_console.json
+!uc3_adi_console.py
+!ws_credentials.example.json
+!uc1-scenario-video-20260927/
+!uc1-scenario-video-20260927/tools/
+!uc1-scenario-video-20260927/tools/*.m
+!uc1-scenario-video-20260927/tools/*.py
+!uc1-scenario-video-20260927/tools/*.sh
+!uc1-scenario-video-20260927/tools/*.md

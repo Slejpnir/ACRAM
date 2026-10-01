@@ -1,0 +1,2 @@
+# Linux launchers must retain executable shell line endings on Windows checkouts.
+*.sh text eol=lf

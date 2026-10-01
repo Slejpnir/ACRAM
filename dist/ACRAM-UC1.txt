@@ -1,0 +1,27 @@
+ACRAM UC1 console
+
+On UC1:
+  bash /home/wrcve/TELEMETRY/dist/ACRAM-UC1.sh
+
+From the Windows project folder:
+  .\dist\ACRAM-UC1.cmd
+
+The Windows launcher connects using SSH and asks for your UC1 password.
+It contains no saved password. VPN/network access to UC1 must be available.
+
+The default run submits labelled demonstration inputs to the real UC1 ADI:
+  Initial risks -> 9 component transactions and 1 aggregate transaction
+  SBOM received -> updated component and aggregate risk transactions
+  UAM received  -> updated component and aggregate risk transactions
+
+It uses 3 users and 9 configured UC1 devices, verifies ADI storage, shows
+console output live, saves logs/results in a unique console-run directory,
+and keeps listening for ADI updates after the sequence. Allow MATLAB a little
+time to start. Stop it with Ctrl+C or by creating the stop file printed at startup.
+
+Optional arguments for either launcher:
+  --check    Check local prerequisites on UC1 without sending transactions.
+  --offline  Run the calculations without ADI transactions.
+  --help     Print usage.
+
+Requires the MATLAB R2025a installation already present on UC1.

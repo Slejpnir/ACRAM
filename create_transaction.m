@@ -54,19 +54,71 @@ function transaction_id = create_transaction(transactionMap, private_key,id, ser
     %decoded = strrep(decoded, '+', '-');
     %decoded = strrep(decoded, '/', '_');
     %signed_transaction('signature') = decoded;
-    % Generate JWT token using selected Python service (smartqc / contextchain)
-    token = generate_token(id, private_key, serviceName);
     pyCreateTransaction = map2pydict(transactionMap);
     Transaction = transactionMod.Transaction;
     signedCreateTransaction = Transaction.sign_transaction(pyCreateTransaction, private_key);
-    response = api.put_transaction(signedCreateTransaction,token);
-    sleepNoGraphics(1);
-    % Process response
-    if py.hasattr(response, 'error')
-        fprintf('[%s] ADI transaction error: %s, Details: %s\n', adiConsoleTimestamp(), char(response.error), char(py.getattr(response, 'details', 'No details')));
-    else
-        transaction_id=char(response);
+    % Conversion of large per-user payloads can outlast the SDK's 10-second
+    % JWT. Issue it only after conversion/signing, immediately before PUT.
+    for attempt = 1:2
+        token = generate_token(id, private_key, serviceName);
+        response = api.put_transaction(signedCreateTransaction, token);
+        [hasError, statusCode] = responseError(response);
+        if hasError
+            if statusCode == 401 && attempt == 1
+                fprintf('[%s] ADI authentication rejected (HTTP 401); retrying once with a fresh token.\n', adiConsoleTimestamp());
+                continue;
+            end
+            if statusCode == 401
+                error('create_transaction:ADIAuthenticationFailed', ...
+                    'ADI rejected the transaction (HTTP 401) after token refresh. Check ADI credentials and server clock.');
+            end
+            if statusCode > 0
+                error('create_transaction:ADIRequestFailed', ...
+                    'ADI rejected the transaction (HTTP %d). No transaction ID was returned.', statusCode);
+            end
+            error('create_transaction:ADIRequestFailed', ...
+                'ADI request failed. No transaction ID was returned.');
+        end
+        transaction_id = validatedTransactionId(response);
+        sleepNoGraphics(1);
+        return;
     end
+end
+
+function [hasError, statusCode] = responseError(response)
+    hasError = false;
+    statusCode = 0;
+    if ~isa(response, 'py.dict'), return; end
+    % Python dictionary keys are not object attributes (hasattr is false).
+    hasError = logical(py.operator.contains(response, 'error'));
+    if logical(py.operator.contains(response, 'status_code'))
+        try
+            code = double(response{'status_code'});
+            if isscalar(code) && isfinite(code) && code >= 400 && code <= 599 && fix(code) == code
+                statusCode = code;
+                hasError = true;
+            end
+        catch
+        end
+    end
+    if hasError && statusCode == 0 && logical(py.operator.contains(response, 'error'))
+        message = char(py.str(response{'error'}));
+        code = regexp(message, '(?<!\d)([45]\d{2})(?!\d)', 'tokens', 'once');
+        if ~isempty(code), statusCode = str2double(code{1}); end
+    end
+end
+
+function transactionId = validatedTransactionId(response)
+    if ~(isa(response, 'py.str') || ischar(response) || (isstring(response) && isscalar(response)))
+        error('create_transaction:InvalidResponse', ...
+            'ADI returned an unexpected response instead of a transaction ID.');
+    end
+    transactionId = strtrim(char(response));
+    if size(transactionId, 1) ~= 1 || isempty(regexp(transactionId, '^[0-9a-fA-F]{64}$', 'once'))
+        error('create_transaction:InvalidResponse', ...
+            'ADI did not return a valid 64-character hexadecimal transaction ID.');
+    end
+    transactionId = lower(transactionId);
 end
 
 function ts = adiConsoleTimestamp()

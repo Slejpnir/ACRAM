@@ -10,14 +10,11 @@
   "minimalImpactLevel": 0.5,
   "sbom": "manual",
   "parseCVEListFromWebsocket": true,
-  "cveWebsocketSources": ["SBOM Tool"],
+  "cveWebsocketSources": [
+    "SBOM Tool"
+  ],
   "sbomTargetObjectName": "Gateway",
   "networkAnomalyTargetObjectName": "Gateway",
-  "exportRiskGraphs": false,
-  "adiInputContexts": {
-    "bacon": ["c91f82042835e3265ca38a92bc3a49a80c23ab320066169308e18259f33a4168"],
-    "atc": ["524e1931f88652a66acec6c0af1795a34d120bdce8cb058808093ea6d0bf953a", "d3ce45c86789793e43161697f1e89aff0439686db61bc60ce657cb89086d1e3a"]
-  },
   "subjects": [
     {
       "RAL": 1,
@@ -111,17 +108,48 @@
     "SPI": "Average"
   },
   "ACL": {
-    "1,1": { "Permission": "P", "SCA": "AAL-1" },
-    "1,2": { "Permission": "P", "SCA": "AAL-1" },
-    "1,3": { "Permission": "P", "SCA": "AAL-1" },
-    "1,4": { "Permission": "P", "SCA": "AAL-1" },
-    "2,1": { "Permission": "R", "SCA": "AAL-1" },
-    "2,4": { "Permission": "E", "SCA": "AAL-1" },
-    "3,3": { "Permission": "R", "SCA": "AAL-1" }
+    "1,1": {
+      "Permission": "P",
+      "SCA": "AAL-1"
+    },
+    "1,2": {
+      "Permission": "P",
+      "SCA": "AAL-1"
+    },
+    "1,3": {
+      "Permission": "P",
+      "SCA": "AAL-1"
+    },
+    "1,4": {
+      "Permission": "P",
+      "SCA": "AAL-1"
+    },
+    "2,1": {
+      "Permission": "R",
+      "SCA": "AAL-1"
+    },
+    "2,4": {
+      "Permission": "E",
+      "SCA": "AAL-1"
+    },
+    "3,3": {
+      "Permission": "R",
+      "SCA": "AAL-1"
+    }
   },
   "sbomFileName": "Telco_sbom.json",
   "networkFileName": "network_telco3PC.xml",
   "OAFFilename": "telco_3PC_OAF.csv",
   "SABFileName": "telco_3PC_SAB.csv",
-  "credentialsFileName": "ws_credentials_tim.json"
+  "credentialsFileName": "ws_credentials_tim.json",
+  "adiInputContexts": {
+    "bacon": [
+      "c91f82042835e3265ca38a92bc3a49a80c23ab320066169308e18259f33a4168"
+    ],
+    "atc": [
+      "524e1931f88652a66acec6c0af1795a34d120bdce8cb058808093ea6d0bf953a",
+      "d3ce45c86789793e43161697f1e89aff0439686db61bc60ce657cb89086d1e3a"
+    ]
+  },
+  "exportRiskGraphs": false
 }

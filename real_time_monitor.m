@@ -299,9 +299,7 @@ switch lower(action)
                 end
             catch
             end
-            inMap = containers.Map({'$in'},{sources});
-            filter = containers.Map({'data.source'},{inMap});
-            filters = {filter};
+            filters = adi_subscription_filters(configArg, sources);
 
             % Separate variable to keep robot IP(s) gathered from config (optional per object)
             robotIps = strings(0,1);
@@ -380,7 +378,9 @@ switch lower(action)
     case 'reset'
         clearConsoleResetRequest();
         handleADITransactionIndicators("__reset__");
-        adiCallbackContext = [];
+        % A logical reset keeps the WebSocket callback context active. The
+        % context is cleared only by 'stop'; otherwise every transaction after
+        % a reset would be rejected until the whole application restarted.
         resetLiveRiskGui(initialRisks, initialImpacts, initialObjects);
         sendResetRiskTransactions(initialRisks, initialImpacts, initialObjects, ...
             initialNUsers, initialNObjects, initialObjectsNames, initialGraphArray, initialConfig);
@@ -617,6 +617,10 @@ function sendResetRiskTransactions(risks, impacts, objects, nUsers, nObjects, ob
         resetLabels = "ACRAM reset to initial stage";
         sentObjects = 0;
         for objIdx = 1:nObjects
+            % Reuse existing graphs only to derive transaction metadata. A
+            % logical reset intentionally does not export image files; cold
+            % startup and live-update exports remain controlled by
+            % config.exportRiskGraphs.
             graphsForObject = {};
             try
                 if ~isempty(graphArray)
@@ -880,6 +884,11 @@ function handleADITransactionIndicators(transaction, nUsers, nObjects, ACL, obje
         return;
     end
     if isempty(RisksRT), RisksRT = Risks; end
+    % Compare the first incoming update against the initial system risk,
+    % rather than initializing the baseline after that update was applied.
+    if isempty(aggRiskPrev)
+        aggRiskPrev = aggregatedRisk(RisksRT, impacts, objects, 0.7);
+    end
     if isempty(testInputRT), testInputRT = testInputParametersGlobal; end
     if isempty(intermediateRT), intermediateRT = intermediateNodesGlobal; end
     % Ensure per-object arrays for component and network indicators.
@@ -954,6 +963,12 @@ function handleADITransactionIndicators(transaction, nUsers, nObjects, ACL, obje
         % The callback receives the payload directly with nested 'data'
         if ~isfield(transaction,'data'), return; end
 
+        % Route source-less telemetry through its configured existing context.
+        % Context definitions and unrelated contexts in restricted mode are
+        % not observations and must never change the risk state.
+        [src, accepted] = adi_transaction_source(transaction, configArg);
+        if ~accepted, return; end
+
         % De-duplicate by transaction id
         txId = getTxIdFromTx(transaction);
         if txId ~= ""
@@ -980,13 +995,13 @@ function handleADITransactionIndicators(transaction, nUsers, nObjects, ACL, obje
         catch
         end
 
-        % Read source/severity directly
-        src = "";  if isfield(d,'source'),   src = string(d.source);   end
-        if strlength(src) == 0 && isfield(d,'traffic_participants') && isfield(d,'root_cause')
-            src = "NAD";
-        end
+        % Source is resolved above; severity comes from the observation.
         sev = "";  if isfield(d,'severity'), sev = upper(strtrim(string(d.severity))); end
         sendToDataSpaceRT = realtimeSendEnabled(configArg);
+        saveToFileRT = false;
+        if isstruct(configArg) && isfield(configArg, 'saveRealtimeResultsToFile')
+            saveToFileRT = parseConfigLogical(configArg.saveRealtimeResultsToFile);
+        end
 
         % Context id (used for routing)
         ctxId = "";
@@ -1020,6 +1035,8 @@ function handleADITransactionIndicators(transaction, nUsers, nObjects, ACL, obje
             end
             emptyCveListReport = isCveType && ~hasCveList && cveListValueIsZero(d);
             if enableCveWs && (hasCveList || emptyCveListReport)
+                fprintf('[%s] Received SBOM transaction: id=%s\n', ...
+                    char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')), char(getAssetIdFromTx(transaction)));
                 % Extract list
                 cves = [];
                 if isfield(d,'CVE_list')
@@ -1155,7 +1172,7 @@ function handleADITransactionIndicators(transaction, nUsers, nObjects, ACL, obje
                                     graphsForObject = graphNew(:, objIdx);
                                 catch
                                 end
-                                resultJSON(RisksRT(:,objIdx), objectsRT(objIdx).Name, usersNames, 0, sendToDataSpaceRT, inputAssetsIds, [], [], graphsForObject, configArg, followUpIndicators);
+                                resultJSON(RisksRT(:,objIdx), objectsRT(objIdx).Name, usersNames, saveToFileRT, sendToDataSpaceRT, inputAssetsIds, [], [], graphsForObject, configArg, followUpIndicators);
                             catch MEresult
                                 fprintf('UC2 CVE result send failed: %s\n', MEresult.message);
                             end
@@ -1187,7 +1204,7 @@ function handleADITransactionIndicators(transaction, nUsers, nObjects, ACL, obje
                                     catch
                                         followUpIndicators(end+1,1) = "CVE_list";
                                     end
-                                    aggregatedIndicator(aggRiskNew, tablerisks, sendToDataSpaceRT, followUpIndicators, 0, configArg);
+                                    aggregatedIndicator(aggRiskNew, tablerisks, sendToDataSpaceRT, followUpIndicators, saveToFileRT, configArg);
                                     aggRiskPrev = aggRiskNew;
                                 end
                             catch MEaggCve
@@ -1358,6 +1375,9 @@ function handleADITransactionIndicators(transaction, nUsers, nObjects, ACL, obje
                             sabVal = str2double(string(d.value));
                             if isnan(sabVal), sabVal = 0; end
                             sabVal = max(0, min(1, sabVal)); % clamp to [0,1]
+                            fprintf('[%s] Received UAM transaction: id=%s, user=%s, value=%.3f\n', ...
+                                char(datetime('now','Format','yyyy-MM-dd HH:mm:ss')), ...
+                                char(getAssetIdFromTx(transaction)), char(uIdStr), sabVal);
 
                             % Map numeric SAB into discrete SAB levels used by model
                             if sabVal < 0.33
@@ -1397,6 +1417,7 @@ function handleADITransactionIndicators(transaction, nUsers, nObjects, ACL, obje
                             % SAB impacts ALbeforeOAB, so we recompute intermediate nodes per vulnerability
                             % and then apply current per-object OAB adjustment (if present).
                             changedAny = false;
+                            changedObjects = false(1, nObjects);
                             for objIdx = 1:nObjects
                                 if isstruct(ACL{uIdx, objIdx})
                                     % Use current object OAB adjustment if known; otherwise baseline object OAB
@@ -1429,6 +1450,7 @@ function handleADITransactionIndicators(transaction, nUsers, nObjects, ACL, obje
                                     oldVal = RisksRT(uIdx, objIdx);
                                     if abs(oldVal - newVal) > 1e-6
                                         changedAny = true;
+                                        changedObjects(objIdx) = true;
                                         RisksRT(uIdx, objIdx) = newVal;
                                         if ~isempty(subjectsArg)
                                             try
@@ -1458,20 +1480,48 @@ function handleADITransactionIndicators(transaction, nUsers, nObjects, ACL, obje
                                 fprintf('No risk changes for %s after UAM SAB update.\n', char(uIdStr));
                             end
 
-                            % Recompute and report aggregated risk changes (whole system)
+                            % Publish the same current component risk columns used by
+                            % the model, with the UAM transaction as their input asset.
+                            uamAssetId = getAssetIdFromTx(transaction);
+                            inputAssetsIds = strings(0,1);
+                            if strlength(uamAssetId) > 0
+                                inputAssetsIds(end+1,1) = uamAssetId;
+                            end
+                            userNamesCol = "User " + string((1:nUsers)');
+                            uamIndicator = "UAM -> " + uIdStr;
+                            for objIdx = find(changedObjects)
+                                try
+                                    resultJSON(RisksRT(:,objIdx), objects(objIdx).Name, userNamesCol, ...
+                                        saveToFileRT, sendToDataSpaceRT, inputAssetsIds, [], [], ...
+                                        graphArrayRT(:,objIdx), configArg, uamIndicator);
+                                catch MEresult
+                                    fprintf('UAM component result send failed for object %d: %s\n', objIdx, MEresult.message);
+                                end
+                            end
+
+                            % Recompute and publish aggregated risk changes (whole system).
                             try
                                 aggRiskNew = aggregatedRisk(RisksRT, impacts, objects, 0.7);
-                                if isempty(aggRiskPrev)
-                                    aggRiskPrev = aggRiskNew;
-                                end
                                 if abs(aggRiskNew - aggRiskPrev) > 1e-6
                                     fprintf('Aggregated risk changed: %.3f -> %.3f\n', aggRiskPrev, aggRiskNew);
+                                    varNames = strings(1, nObjects);
+                                    for j = 1:nObjects
+                                        varNames(j) = string(matlab.lang.makeValidName(char(string(objects(j).Name))));
+                                    end
+                                    T = array2table(RisksRT, 'VariableNames', cellstr(varNames));
+                                    tablerisks = [table(userNamesCol, 'VariableNames', {'Users'}) T];
+                                    aggregatedIndicator(aggRiskNew, tablerisks, sendToDataSpaceRT, uamIndicator, saveToFileRT, configArg);
                                     aggRiskPrev = aggRiskNew;
                                 else
                                     fprintf('No aggregated risk change. Total risk: %.3f\n', aggRiskNew);
                                 end
                             catch MEagg
                                 fprintf('Aggregated risk recompute failed: %s\n', MEagg.message);
+                            end
+                            try
+                                riskGuiUpdate(RisksRT, impacts, objects);
+                            catch MEgui
+                                fprintf('Risk GUI live update skipped: %s\n', MEgui.message);
                             end
                             return; % do not process as network indicator event
                         end
@@ -1806,7 +1856,6 @@ function [objIdx, objName, objIp] = resolveUc2ObjectFromSubject(subj, objects, r
             tokName = regexp(char(s), 'name_src=([^;]+)', 'tokens', 'once');
             if ~isempty(tokName)
                 objName = string(tokName{1});
-                objName = strrep(objName, "_", " ");
             end
         end
         % IP match first
@@ -1821,17 +1870,31 @@ function [objIdx, objName, objIp] = resolveUc2ObjectFromSubject(subj, objects, r
                 end
             end
         end
-        % Name match
+        % Keep literal underscores in configured names (for example Router_1).
+        % Prefer an exact name before accepting the legacy space/underscore alias.
         if strlength(objName) > 0
-            for j = 1:numel(objects)
-                try
-                    if lower(string(objects(j).Name)) == lower(objName)
-                        objIdx = j;
-                        objIp = string(objects(j).IP);
-                        return;
+            objIdx = findObjectIdxByName(objects, objName);
+            if objIdx <= 0
+                normalizedName = lower(strtrim(strrep(objName, "_", " ")));
+                for j = 1:numel(objects)
+                    try
+                        candidateName = lower(strtrim(strrep(string(objects(j).Name), "_", " ")));
+                        if candidateName == normalizedName
+                            objIdx = j;
+                            break;
+                        end
+                    catch
                     end
-                catch
                 end
+            end
+            if objIdx > 0
+                objName = string(objects(objIdx).Name);
+                try
+                    objIp = string(objects(objIdx).IP);
+                catch
+                    objIp = "";
+                end
+                return;
             end
         end
         targetName = getConfigString(configArg, ["sbomTargetObjectName", "sbomTargetObject", "cveTargetObjectName"]);

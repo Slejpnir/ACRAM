@@ -1,0 +1,10 @@
+# Replace only the compiled MATLAB application while retaining the existing
+# matching MATLAB Runtime and Python environment from a previously built image.
+ARG BASE_IMAGE=docker.io/library/acram:r2025b-pyfix1
+FROM ${BASE_IMAGE}
+
+USER root
+COPY --chown=10001:10001 dist/bin/ /opt/acram/bin/
+RUN chmod 0555 /opt/acram/bin/ACRAM
+
+USER 10001:10001

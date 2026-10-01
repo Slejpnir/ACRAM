@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acram
+spec:
+  progressDeadlineSeconds: 5400
+  template:
+    spec:
+      terminationGracePeriodSeconds: 180
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - uc2-3
+      containers:
+        - name: acram
+          imagePullPolicy: Never
+          startupProbe:
+            failureThreshold: 900

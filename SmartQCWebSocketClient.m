@@ -15,7 +15,7 @@ classdef SmartQCWebSocketClient < handle
         transactionCallback % Callback for transactions
         authAttempts    % Number of authentication attempts
         maxAuthAttempts % Maximum allowed authentication attempts
-        pythonPid       % Process ID of the spawned Python client (Windows)
+        pythonPid       % Process ID of the spawned Python client
         monitorTimer    % Timer that polls the Python output file (non-blocking)
         monitorLastPos  % Last byte offset read from the output file
     end
@@ -177,6 +177,9 @@ classdef SmartQCWebSocketClient < handle
                 obj.outputFile = fullfile(pwd, 'smartqc_output.json');
                 obj.errorFile = fullfile(pwd, 'smartqc_error.log');
                 obj.pidFile = fullfile(pwd, 'smartqc_pid.txt');
+                % The work directory is persisted by Kubernetes. Never trust
+                % a PID left by an earlier container instance.
+                SmartQCWebSocketClient.quietDelete(obj.pidFile);
                 % Create Python script
                 pythonScript = obj.createPythonScript();
                 % Write Python script to file
@@ -210,42 +213,58 @@ classdef SmartQCWebSocketClient < handle
                         fprintf('[WARN] Could not obtain Python PID. Output: %s\n', out);
                     end
                 else
-                    % Unix/Linux/Mac (best effort)
-                    cmd = sprintf('sh -c "python3 -u \"%s\" >> \"%s\" 2>&1 & echo $!"', scriptFileAbs, obj.outputFile);
-                    [~, out] = system(cmd);
-                    obj.pythonPid = str2double(strtrim(out));
+                    % Unix/Linux/Mac. MATLAB's system() already invokes a
+                    % shell, so do not add a nested `sh -c "..."`: the outer
+                    % shell expands $! before the inner shell can report the
+                    % child PID. Redirect every standard stream so system()
+                    % returns while Python continues in the background.
+                    scriptArg = SmartQCWebSocketClient.posixShellQuote(scriptFileAbs);
+                    outputArg = SmartQCWebSocketClient.posixShellQuote(obj.outputFile);
+                    errorArg = SmartQCWebSocketClient.posixShellQuote(obj.errorFile);
+                    cmd = sprintf([ ...
+                        'python3 -u %s >> %s 2>> %s </dev/null & ' ...
+                        'printf ''%%s\\n'' $!'], scriptArg, outputArg, errorArg);
+                    [launchStatus, out] = system(cmd);
+                    pidVal = str2double(strtrim(out));
+                    if launchStatus == 0 && SmartQCWebSocketClient.isValidPid(pidVal)
+                        obj.pythonPid = pidVal;
+                        fprintf('Python client PID: %d\n', obj.pythonPid);
+                    else
+                        obj.pythonPid = [];
+                        error('SmartQCWebSocketClient:BackgroundLaunchFailed', ...
+                            'Python background launch failed (status %d, output "%s").', ...
+                            launchStatus, strtrim(out));
+                    end
                 end
                 clear envCleanup
-                sleepNoGraphics(1); % Wait for process to start without pumping graphics callbacks.
-                obj.isRunning = true;
-                % Liveness check; if dead, dump logs and run foreground for diagnostics
-                if ispc
-                    if isempty(obj.pythonPid) || isnan(obj.pythonPid)
-                        alive = false;
-                    else
-                        [~, tlout] = system(sprintf('tasklist /FI "PID eq %d"', obj.pythonPid));
-                        alive = contains(tlout, sprintf('%d', obj.pythonPid));
+                % Wait for the generated script to finish importing its
+                % dependencies and write its own PID file. This prevents a
+                % merely spawned (but unusable) Python process from making
+                % Kubernetes report the application as ready.
+                pidFileReady = false;
+                for attempt = 1:20
+                    if ~SmartQCWebSocketClient.isProcessAlive(obj.pythonPid)
+                        break;
                     end
-                    if ~alive
-                        fprintf('[ERROR] Python client exited immediately. Last logs (if any):\n');
-                        if exist(obj.outputFile, 'file')
-                            try
-                                type(obj.outputFile);
-                            catch
-                            end
-                        end
-                        if exist(obj.errorFile, 'file')
-                            try
-                                type(obj.errorFile);
-                            catch
-                            end
-                        end
-                        fprintf('Running in foreground for diagnostics...\n');
-                        system(sprintf('python -u "%s"', scriptFileAbs));
-                        obj.isRunning = false;
-                        return;
+                    pidFromFile = SmartQCWebSocketClient.readPidFile(obj.pidFile);
+                    if SmartQCWebSocketClient.isValidPid(pidFromFile) && ...
+                            pidFromFile == obj.pythonPid
+                        pidFileReady = true;
+                        break;
                     end
+                    sleepNoGraphics(0.25);
                 end
+                if ~pidFileReady
+                    fprintf('[ERROR] Python WebSocket client did not become ready. Last logs (if any):\n');
+                    SmartQCWebSocketClient.printFileIfPresent(obj.outputFile);
+                    SmartQCWebSocketClient.printFileIfPresent(obj.errorFile);
+                    SmartQCWebSocketClient.quietStopProcess(obj.pythonPid);
+                    SmartQCWebSocketClient.quietDelete(obj.pidFile);
+                    obj.pythonPid = [];
+                    obj.isRunning = false;
+                    return;
+                end
+                obj.isRunning = true;
                 % Start monitoring output via a MATLAB timer so this method
                 % returns immediately. A blocking while-loop here would freeze
                 % the caller (and the risk-levels GUI) for the entire WS
@@ -255,6 +274,8 @@ classdef SmartQCWebSocketClient < handle
             catch ME
                 fprintf('Failed to connect in background: %s\n', ME.message);
                 obj.isRunning = false;
+                SmartQCWebSocketClient.quietStopProcess(obj.pythonPid);
+                obj.pythonPid = [];
             end
         end
 
@@ -701,12 +722,11 @@ classdef SmartQCWebSocketClient < handle
             % Kill the Python process. Try the in-memory PID first; only
             % fall back to the PID stored in the pid file if it is a
             % *different* PID we have not already killed (avoids the
-            % "ERROR: The process not found" line printed by taskkill on
-            % the second attempt).
+            % duplicate process-stop diagnostics on the second attempt.
             killedPids = [];
-            if ispc && ~isempty(obj.pythonPid) && isnumeric(obj.pythonPid) && ~isnan(obj.pythonPid)
+            if SmartQCWebSocketClient.isValidPid(obj.pythonPid)
                 killedPids(end+1) = obj.pythonPid;
-                SmartQCWebSocketClient.quietTaskkill(obj.pythonPid);
+                SmartQCWebSocketClient.quietStopProcess(obj.pythonPid);
                 obj.pythonPid = [];
             end
 
@@ -717,8 +737,9 @@ classdef SmartQCWebSocketClient < handle
                         pidStr = strtrim(fread(fid, '*char')');
                         fclose(fid);
                         pidNum = str2double(pidStr);
-                        if ispc && ~isnan(pidNum) && ~ismember(pidNum, killedPids)
-                            SmartQCWebSocketClient.quietTaskkill(pidNum);
+                        if SmartQCWebSocketClient.isValidPid(pidNum) && ...
+                                ~ismember(pidNum, killedPids)
+                            SmartQCWebSocketClient.quietStopProcess(pidNum);
                         end
                     end
                     SmartQCWebSocketClient.quietDelete(obj.pidFile);
@@ -760,25 +781,92 @@ classdef SmartQCWebSocketClient < handle
     end
 
     methods (Static, Access = private)
-        function quietTaskkill(pid)
-            % Kill a Windows PID without spamming the MATLAB command window
-            % with taskkill's stdout/stderr ("SUCCESS: ..." / "ERROR: The
-            % process ... not found"). Errors from system() itself are
-            % swallowed because the only meaningful failure (already gone)
-            % is something we don't care about here.
-            if isempty(pid) || ~isnumeric(pid) || isnan(pid)
+        function valid = isValidPid(pid)
+            valid = isnumeric(pid) && isscalar(pid) && isreal(pid) && ...
+                ~isnan(pid) && ~isinf(pid) && pid > 1 && fix(pid) == pid;
+        end
+
+        function alive = isProcessAlive(pid)
+            alive = false;
+            if ~SmartQCWebSocketClient.isValidPid(pid)
                 return;
             end
             try
                 if ispc
-                    [status, ~] = system(sprintf( ...
-                        'taskkill /F /PID %d >NUL 2>&1', pid));
+                    [status, output] = system(sprintf( ...
+                        'tasklist /FI "PID eq %d" /NH 2>NUL', pid));
+                    alive = status == 0 && contains(output, sprintf('%d', pid));
                 else
-                    [status, ~] = system(sprintf('kill -9 %d >/dev/null 2>&1', pid));
+                    [status, ~] = system(sprintf( ...
+                        'kill -0 %d >/dev/null 2>&1', pid));
+                    alive = status == 0;
                 end
-                if status ~= 0
-                    % Process already gone, or never existed - that's fine.
+            catch
+                alive = false;
+            end
+        end
+
+        function pid = readPidFile(filePath)
+            pid = nan;
+            try
+                if isempty(filePath) || ~exist(filePath, 'file')
+                    return;
                 end
+                fid = fopen(filePath, 'r');
+                if fid == -1
+                    return;
+                end
+                fileCleanup = onCleanup(@() fclose(fid));
+                pid = str2double(strtrim(fread(fid, '*char')'));
+                clear fileCleanup
+            catch
+                pid = nan;
+            end
+        end
+
+        function quoted = posixShellQuote(value)
+            if isstring(value)
+                value = char(value);
+            end
+            if ~ischar(value)
+                error('SmartQCWebSocketClient:InvalidShellArgument', ...
+                    'POSIX shell arguments must be character vectors or strings.');
+            end
+            singleQuote = char(39);
+            doubleQuote = char(34);
+            escapedQuote = [singleQuote doubleQuote singleQuote doubleQuote singleQuote];
+            quoted = [singleQuote strrep(value, singleQuote, escapedQuote) singleQuote];
+        end
+
+        function printFileIfPresent(filePath)
+            try
+                if ~isempty(filePath) && exist(filePath, 'file')
+                    type(filePath);
+                end
+            catch
+            end
+        end
+
+        function quietStopProcess(pid)
+            % Stop the background client without leaking taskkill/kill output.
+            if ~SmartQCWebSocketClient.isValidPid(pid)
+                return;
+            end
+            try
+                if ispc
+                    system(sprintf( ...
+                        'taskkill /T /F /PID %d >NUL 2>&1', pid));
+                    return;
+                end
+
+                system(sprintf('kill -TERM %d >/dev/null 2>&1', pid));
+                for attempt = 1:10
+                    if ~SmartQCWebSocketClient.isProcessAlive(pid)
+                        return;
+                    end
+                    sleepNoGraphics(0.1);
+                end
+                system(sprintf('kill -KILL %d >/dev/null 2>&1', pid));
             catch
             end
         end
